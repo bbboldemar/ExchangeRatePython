@@ -4,8 +4,9 @@ import requests
 from datetime import datetime
 from mail_sender import send_email
 import logging
-logging.basicConfig(filename="logfile.log", level=logging.INFO)
 import os
+logging.basicConfig(filename="logfile.log", level=logging.INFO)
+
 
 labels = []
 cycles = 0
@@ -17,6 +18,7 @@ def update_prices():
     try:
         global cycles
         counter = 0
+        correct_SMMTP = True
         for symbol in symbols:
             response = requests.get(api_twelvedata.format(symbol))
             date_time = response.json()['values'][0]['datetime']
@@ -25,9 +27,9 @@ def update_prices():
                 CCoin = 'Siacoin'
             else:
                 CCoin = 'Bitcoin'
-            if float(cost) > prices[counter]:
-                send_email(CCoin + ' cost is ' + cost + ' at ' + date_time + ' (more than ' + f'{prices[counter]}' + ')')
-                # messagebox.showinfo ("Price reached your limit!", CCoin + ' cost is ' + cost + ' at ' + date_time + ' (more than ' + f'{prices[counter]}' + ')')         
+            if float(cost) > prices[counter] and correct_SMMTP == True:
+                correct_SMMTP = send_email(CCoin + ' cost is ' + cost + ' at ' + date_time + ' (more than ' + f'{prices[counter]}' + ')')
+                # messagebox.showinfo ("Price reached your limit!", CCoin + ' cost is ' + cost + ' at ' + date_time + ' (more than ' + f'{prices[counter]}' + ')')
             labels[counter].configure(text=CCoin + f' ({symbol})' ' value is ' + cost + ' at ' + date_time)
             counter +=1
         logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Update')

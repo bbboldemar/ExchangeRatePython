@@ -35,10 +35,12 @@ def send_email(mail_content):
             session.sendmail(your_address, your_address, text)
             session.quit()
             logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Mail sent')
+            return True
         except:
             logging.error(datetime.today().strftime('%D - %H:%M:%S') + ' Error via sending email: invalid SMTP parameters')
-            # messagebox.showinfo ("Error", "Invalid email address or password")
-
+            messagebox.showinfo ("Subscription Error", "Invalid address or password")
+            return False
+        
 
 # send_email('OwO')
 
