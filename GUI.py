@@ -1,5 +1,5 @@
-from tkinter import Button, Entry, Tk, Label, messagebox
-from tkinter.constants import BOTTOM
+from tkinter import *
+from tkinter.constants import BOTTOM, LEFT, RIGHT
 import requests
 from datetime import datetime
 from mail_sender import send_email
@@ -7,12 +7,40 @@ import logging
 import os
 logging.basicConfig(filename="logfile.log", level=logging.INFO)
 
-
+subscribed = 1
 labels = []
 cycles = 0
 symbols = ['SC','BTC']
-prices = [0.02, 39000]
+prices = [0.02, 42000]
 api_twelvedata = 'https://api.twelvedata.com/time_series?symbol={}/USD&interval=1min&outputsize=3&format=JSON&dp=5&timezone=Europe/Moscow&apikey=f7e12a1a4dd34faca920cdff2c088e2b'
+
+def sub_button():
+    global button_sub_enabled, lable_sub_enabled, button_sub_disabled, lable_sub_disabled
+    if subscribed == 1:
+        button_sub_enabled = Button(width=25, font=('Arial,25'), fg='red',text='Disable Subscription', command=lambda: disable_subscription())
+        button_sub_enabled.pack(side = BOTTOM)
+        lable_sub_enabled = Label(root_window, font=('Arial,20'), text='email subcribtion enabled')
+        lable_sub_enabled.pack(side = BOTTOM)
+
+    else:
+        button_sub_disabled = Button(width=25, font=('Arial,25'), fg='green',text='Enable Subscription', command=lambda: enable_subscription())
+        button_sub_disabled.pack(side = BOTTOM)
+        lable_sub_disabled= Label(root_window, font=('Arial,20'), text='email subcribtion disabled')
+        lable_sub_disabled.pack(side = BOTTOM)
+
+def enable_subscription():
+    global subscribed
+    button_sub_disabled.destroy()
+    lable_sub_disabled.destroy()
+    subscribed = 1
+    sub_button()
+
+def disable_subscription():
+    global subscribed
+    button_sub_enabled.destroy()
+    lable_sub_enabled.destroy()
+    subscribed = 0
+    sub_button()
 
 def update_prices():
     try:
@@ -57,23 +85,12 @@ def create_lables(symbols):
         messagebox.showinfo ("Error", "Can't reach remote server")
         os._exit(os.EX_OK)
 
-
-def change_email_adress(new_email):
-    f = open("exchanger_settings", "w")
-    f.write(new_email)
-    f.close()
-    messagebox.showinfo ("Success", "Email is changed to " + new_email)
-
 root_window = Tk()
 root_window.title("Cryptocurrency to USD")
 root_window.geometry('500x125')
 
 create_lables(symbols)
-
-button = Button(width=25,text='Change email adress', command=lambda: change_email_adress(entry.get()))
-button.pack(side = BOTTOM)
-entry = Entry(width=25, borderwidth=1)
-entry.pack(side = BOTTOM)
+sub_button()
 
 root_window.after(5000, update_prices)
 logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Start')
