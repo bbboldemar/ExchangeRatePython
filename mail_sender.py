@@ -6,15 +6,17 @@ from datetime import datetime
 import logging
 logging.basicConfig(filename="logfile.log", level=logging.INFO)
 
-def get_email_data():
-    f = open("exchanger_settings", "r")
-    contents = f.read().split()
-    f.close()
-    return contents
+# def get_email_data():
+    # f = open("exchanger_settings", "r")
+    # contents = f.read().split()
+    # f.close()
+    # return contents
 
 def send_email(mail_content):
     try:
-        your_address, your_password = get_email_data()
+        # your_address, your_password = get_email_data()
+        your_address = '******@gmail.com'
+        your_password = "******"
         exchanger_setting_exists = True
     except:
         logging.error(datetime.today().strftime('%D - %H:%M:%S') + ' Error via sending email: cant reach exchanger_settings')
