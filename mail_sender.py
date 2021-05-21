@@ -7,11 +7,10 @@ import logging
 logging.basicConfig(filename="logfile.log", level=logging.INFO)
 
 def get_email_data():
-    # f = open("exchanger_settings", "r")
-    # contents = f.read()
-    # f.close()
-    # return contents
-    return '******@gmail.com', '******'
+    f = open("exchanger_settings", "r")
+    contents = f.read().split()
+    f.close()
+    return contents
 
 def send_email(mail_content):
     try:

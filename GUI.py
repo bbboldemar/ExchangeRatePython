@@ -1,11 +1,27 @@
-from tkinter import *
+from tkinter import Button, Entry, Tk, Label, messagebox
 from tkinter.constants import BOTTOM, LEFT, RIGHT
 import requests
 from datetime import datetime
 from mail_sender import send_email
 import logging
 import os
+import sys
 logging.basicConfig(filename="logfile.log", level=logging.INFO)
+
+def first_launch_check():
+    try:
+        f = open("exchanger_settings", "r")
+        f.close()
+    except:   
+        print('Черех пробел ведите логин и пароль от почты для подписки на email рассылку')
+        user_data = input()
+        f = open("exchanger_settings", "w")
+        f.write(user_data)
+        f.close()
+        messagebox.showinfo ("You are subscribed now", "Yor login and password are: " + user_data)
+        os.execv(sys.executable, ['python'] + sys.argv)
+
+first_launch_check()
 
 subscribed = 1
 labels = []
@@ -55,8 +71,8 @@ def update_prices():
                 CCoin = 'Siacoin'
             else:
                 CCoin = 'Bitcoin'
-            if float(cost) > prices[counter] and correct_SMMTP == True:
-                correct_SMMTP = send_email(CCoin + ' cost is ' + cost + ' at ' + date_time + ' (more than ' + f'{prices[counter]}' + ')')
+            if float(cost) > prices[counter] and subscribed == 1:
+                send_email(CCoin + ' cost is ' + cost + ' at ' + date_time + ' (more than ' + f'{prices[counter]}' + ')')
                 # messagebox.showinfo ("Price reached your limit!", CCoin + ' cost is ' + cost + ' at ' + date_time + ' (more than ' + f'{prices[counter]}' + ')')
             labels[counter].configure(text=CCoin + f' ({symbol})' ' value is ' + cost + ' at ' + date_time)
             counter +=1
@@ -85,10 +101,10 @@ def create_lables(symbols):
         messagebox.showinfo ("Error", "Can't reach remote server")
         os._exit(os.EX_OK)
 
+
 root_window = Tk()
 root_window.title("Cryptocurrency to USD")
-root_window.geometry('500x125')
-
+root_window.geometry('500x125')  
 create_lables(symbols)
 sub_button()
 
