@@ -3,7 +3,7 @@ from tkinter.constants import BOTTOM, LEFT, RIGHT
 import requests
 from datetime import datetime
 from mail_sender import send_email
-from settings_checker import subscription_checker
+from settings_checker import subscription_checker, settings_changer
 import logging
 logging.basicConfig(filename="logfile.log", level=logging.INFO)
 
@@ -33,26 +33,15 @@ def not_first_launch_check():
         logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' First launch, email subscription disabled')  
         first_launch_window.mainloop()
              
-        # print('Через пробел ведите логин и пароль от почты для подписки на email рассылку')
-        # user_data = input()
-        # f = open("exchanger_settings", "w")
-        # f.write(user_data)
-        # f.close()
-        # messagebox.showinfo ("You are subscribed now", "Yor login and password are: " + user_data)
-        # os.execv(sys.executable, ['python'] + sys.argv)
-
 def first_launch_window_answer(choise):
-    f = open("exchanger_settings", "w")
     if choise == 'Yes':
-        f.write('subscription_enabled\n')
-        logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Email subscription enabled')
+        first_launch_window.destroy()
         subscription_settings_window()   
+          
     else:        
-        f.write('subscription_disabled\n')
         logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Email subscription disabled')   
         messagebox.showinfo ("Email subscription disabled", "You can enable email subscription later") 
         first_launch_window.destroy()      
-    f.close()
          
 def create_lables(symbols):
     try:
@@ -123,22 +112,20 @@ def sub_button(choise):
 def subscribsion_settings_opener(choise):
     with open("exchanger_settings",'r') as f:
         get_all = f.readlines()
-    with open("exchanger_settings",'w') as f:
-        for i,line in enumerate(get_all,1):
-            if i == 1:
-                if choise == 'enable':
-                    choise = True
-                    f.writelines('subscription_enabled\n')
-                else:
-                    choise = False
+    if choise == 'disable':
+        choise = False
+        with open("exchanger_settings",'w') as f:
+            for i,line in enumerate(get_all,1):
+                if i == 1:
                     f.writelines('subscription_disabled\n')
                     logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Email subscription disabled')
-            else:
-                f.writelines(line)        
-    if choise == True:
+                else:
+                    f.writelines(line)
+    else:
+        choise = True
         root_window.withdraw()
-        subscription_settings_window()                     
-    sub_button(choise)
+        subscription_settings_window()
+    sub_button(choise)    
 
 def subscription_settings_window():
     global root_window
@@ -146,10 +133,6 @@ def subscription_settings_window():
     subscription_window = Tk()
     subscription_window.title("Settings")
     subscription_window.geometry('500x125')
-    try:
-        first_launch_window.destroy()
-    except Exception: 
-        pass
     apply_changes_button = Button(subscription_window, width=25, font='Arial,25', text='Apply changes ', command=lambda: apply_changes())
     apply_changes_button.pack(side = BOTTOM)  
     subscription_window.mainloop
@@ -160,6 +143,7 @@ def apply_changes():
     except Exception: 
         pass
     subscription_window.destroy()
+    settings_changer()
     logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Email subscription enabled')
 
 not_first_launch_check()
