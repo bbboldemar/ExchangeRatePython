@@ -1,16 +1,33 @@
-from tkinter import messagebox, Label, Button, DISABLED, Tk
+from tkinter import messagebox, Label, Button, DISABLED, Tk, Entry
 from tkinter.constants import BOTTOM, LEFT, RIGHT
 import requests
 from datetime import datetime
 from mail_sender import send_email
-from settings_checker import subscription_checker, settings_changer
+from settings_checker import subscription_checker, subscription_switcher, settings_data_changer, target_price_checker, price_history_update
 import logging
+import webbrowser
 logging.basicConfig(filename="logfile.log", level=logging.INFO)
 
 labels = []
 symbols = ['SC','BTC']
-prices = [0.02, 36000]
 api_twelvedata = 'https://api.twelvedata.com/time_series?symbol={}/USD&interval=1min&outputsize=3&format=JSON&dp=5&timezone=Europe/Moscow&apikey=f7e12a1a4dd34faca920cdff2c088e2b'
+# key=f7e12a1a4dd34faca920cdff2c088e2b
+# key=ab2a1285e34c4fa78173db8c5a9f6d5f
+def create_lables(symbols):
+    try:
+        for symbol in symbols:
+            response = requests.get(api_twelvedata.format(symbol))
+            currency_base = response.json()['meta']['currency_base']
+            date_time = response.json()['values'][0]['datetime']
+            cost = response.json()['values'][0]['close']
+            price_history_update(currency_base, date_time, cost)
+            lable = Label(root_window, font=('Arial,25'), text=currency_base + f' ({symbol})' ' value is ' + cost + ' at ' + date_time)
+            lable.pack()
+            labels.append(lable)
+    except:
+        logging.error(datetime.today().strftime('%D - %H:%M:%S') + ' Error: cant reach remote API')
+        messagebox.showinfo ("Error", "Can't reach remote server")
+        create_lables(symbols)
 
 def not_first_launch_check():
     try:
@@ -28,7 +45,9 @@ def not_first_launch_check():
         button_sub_disabled = Button(first_launch_window, width=15, font=('Arial,25'), fg='green',text='Yes', command=lambda: first_launch_window_answer('Yes'))
         button_sub_disabled.pack(side = RIGHT,padx = 20)
         f = open("exchanger_settings", "w")
-        f.write('subscription_disabled\n')
+        f.write('subscription_disabled\nNone\nNone\nNone\nNone\n')
+        f.close()
+        f = open("price_history", "w")
         f.close()
         logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' First launch, email subscription disabled')  
         first_launch_window.mainloop()
@@ -41,50 +60,43 @@ def first_launch_window_answer(choise):
     else:        
         logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Email subscription disabled')   
         messagebox.showinfo ("Email subscription disabled", "You can enable email subscription later") 
-        first_launch_window.destroy()      
-         
-def create_lables(symbols):
+        first_launch_window.destroy()       
+
+def update_prices():
+    success = True
+    subrscription_status = subscription_checker()
+    logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Updating...')
+    if subrscription_status == True:
+        try:
+            prices = target_price_checker()
+        except:
+            logging.error(datetime.today().strftime('%D - %H:%M:%S') + ' Invalid target price format')
+            button_sub_enabled.destroy(), lable_sub_enabled.destroy()
+            subscribsion_settings_opener('enable')
+            messagebox.showinfo ("Subscription Error", "Invalid target price format") 
+            subrscription_status = False
     try:
+        counter = 0
         for symbol in symbols:
             response = requests.get(api_twelvedata.format(symbol))
+            currency_base = response.json()['meta']['currency_base']
             date_time = response.json()['values'][0]['datetime']
             cost = response.json()['values'][0]['close']
-            if symbol == 'SC':
-                CCoin = 'Siacoin'
-            else:
-                CCoin = 'Bitcoin'
-            lable = Label(root_window, font=('Arial,25'), text=CCoin + f' ({symbol})' ' value is ' + cost + ' at ' + date_time)
-            lable.pack()
-            labels.append(lable)
+            price_history_update(currency_base, date_time, cost)
+            if subrscription_status == True and float(cost) > prices[counter]:
+                success = send_email(currency_base + ' cost is ' + cost + ' at ' + date_time + ' (more than ' + f'{prices[counter]}' + ')')
+            labels[counter].configure(text=currency_base + f' ({symbol})' ' value is ' + cost + ' at ' + date_time)
+            counter += 1
+        if success == False:
+            logging.error(datetime.today().strftime('%D - %H:%M:%S') + ' Invalid email address or password')
+            button_sub_enabled.destroy(), lable_sub_enabled.destroy()
+            subscribsion_settings_opener('enable')            
+            messagebox.showinfo ("Subscription Error", "Invalid email address or password")
+        logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Successful update!')
     except:
         logging.error(datetime.today().strftime('%D - %H:%M:%S') + ' Error: cant reach remote API')
-        messagebox.showinfo ("Error", "Can't reach remote server")
-        create_lables(symbols)
-        # os._exit(os.EX_OK)
-
-def update_prices(state):
-    if state == True:
-        try:
-            counter = 0
-            for symbol in symbols:
-                response = requests.get(api_twelvedata.format(symbol))
-                date_time = response.json()['values'][0]['datetime']
-                cost = response.json()['values'][0]['close']
-                if symbol == 'SC':
-                    CCoin = 'Siacoin'
-                else:
-                    CCoin = 'Bitcoin'
-                if float(cost) > prices[counter] and subscription_checker() == True:
-                    send_email(CCoin + ' cost is ' + cost + ' at ' + date_time + ' (more than ' + f'{prices[counter]}' + ')')
-                    # messagebox.showinfo ("Price reached your limit!", CCoin + ' cost is ' + cost + ' at ' + date_time + ' (more than ' + f'{prices[counter]}' + ')')
-                labels[counter].configure(text=CCoin + f' ({symbol})' ' value is ' + cost + ' at ' + date_time)
-                counter +=1
-            logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Update')
-            root_window.after(60000, update_prices, False)  #Need to change to True   
-        except:
-            logging.error(datetime.today().strftime('%D - %H:%M:%S') + ' Error: cant reach remote API')
-            messagebox.showinfo ("Error", "Can't reach remote API to update prices")
-            root_window.after(5000, update_prices, False)   #Need to change to True    
+        messagebox.showinfo ("Error", "Can't reach remote API to update prices")
+    root_window.after(60000, update_prices)
 
 def sub_button(choise):
     global button_sub_enabled, lable_sub_enabled, button_sub_disabled, lable_sub_disabled, root_window
@@ -97,7 +109,6 @@ def sub_button(choise):
             button_sub_disabled.destroy(), lable_sub_disabled.destroy()
         except Exception: 
             pass
-        update_prices(False)      
     else:
         button_sub_disabled = Button(root_window, width=25, font='Arial,25', text='Enable Subscription', command=lambda: subscribsion_settings_opener('enable'))
         button_sub_disabled.pack(side = BOTTOM)
@@ -107,53 +118,98 @@ def sub_button(choise):
             button_sub_enabled.destroy(), lable_sub_enabled.destroy()   
         except Exception: 
             pass  
-        update_prices(False)   #Need to change to True 
-               
+
 def subscribsion_settings_opener(choise):
-    with open("exchanger_settings",'r') as f:
-        get_all = f.readlines()
+    subscription_switcher('disable')
     if choise == 'disable':
-        choise = False
-        with open("exchanger_settings",'w') as f:
-            for i,line in enumerate(get_all,1):
-                if i == 1:
-                    f.writelines('subscription_disabled\n')
-                    logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Email subscription disabled')
-                else:
-                    f.writelines(line)
-    else:
-        choise = True
+        logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Email subscription disabled')
+        sub_button(False)
+    else:         
         root_window.withdraw()
         subscription_settings_window()
-    sub_button(choise)    
 
 def subscription_settings_window():
-    global root_window
-    global subscription_window
+    global root_window, subscription_window, entry_address, entry_password, entry_SC_min, entry_BC_min
     subscription_window = Tk()
     subscription_window.title("Settings")
-    subscription_window.geometry('500x125')
-    apply_changes_button = Button(subscription_window, width=25, font='Arial,25', text='Apply changes ', command=lambda: apply_changes())
-    apply_changes_button.pack(side = BOTTOM)  
+    subscription_window.geometry('560x180')
+
+    discard_button = Button(subscription_window, width=18, fg='red', font='Arial,25', text='Disable Subscription', command=lambda: discard_changes())
+    discard_button.place(relx=0.02, rely=0.8)
+    
+    apply_changes_button = Button(subscription_window, width=18, fg='green', font='Arial,25', text='Apply Changes', command=lambda: apply_changes(entry_address.get(), entry_password.get(), entry_SC_min.get(), entry_BC_min.get()))
+    apply_changes_button.place(relx=0.6, rely=0.8)
+
+    lable_address = Label(subscription_window, font=('Arial,18'), text='Type in your email address: ')
+    lable_address.place(relx=0.01, rely=0.05)    
+    entry_address = Entry(subscription_window, width=30, borderwidth=1)
+    entry_address.place(relx=0.5, rely=0.05)
+
+    lable_password = Label(subscription_window, font=('Arial,18'), text='Type in your email password: ')
+    lable_password.place(relx=0.01, rely=0.2)
+    entry_password = Entry(subscription_window, width=30, borderwidth=1, show='*')
+    entry_password.place(relx=0.5, rely=0.2)  
+
+    response = requests.get(api_twelvedata.format('SC'))
+    currency_base = response.json()['meta']['currency_base']
+    date_time = response.json()['values'][0]['datetime']
+    cost = response.json()['values'][0]['close']
+    price_history_update(currency_base, date_time, cost)
+    lable_SC_minmax = Label(subscription_window, font=('Arial,18'), text='Type in tracking price for Siacoin: ')
+    lable_SC_minmax.place(relx=0.01, rely=0.35)
+    entry_SC_min = Entry(subscription_window, width=15)
+    entry_SC_min.place(relx=0.5, rely=0.35)
+    lable_BC_current = Label(subscription_window, text='Current: '+cost)
+    lable_BC_current.place(relx=0.73, rely=0.35)        
+
+    response = requests.get(api_twelvedata.format('BTC'))
+    currency_base = response.json()['meta']['currency_base']
+    date_time = response.json()['values'][0]['datetime']
+    cost = response.json()['values'][0]['close']
+    price_history_update(currency_base, date_time, cost)
+    lable_BC_minmax = Label(subscription_window, font=('Arial,18'), text='Type in tracking price for Bitcoin: ')
+    lable_BC_minmax.place(relx=0.01, rely=0.5)
+    entry_BC_min = Entry(subscription_window, width=15)
+    entry_BC_min.place(relx=0.5, rely=0.5) 
+    lable_BC_current = Label(subscription_window, text='Current: '+cost)
+    lable_BC_current.place(relx=0.73, rely=0.5)     
+
     subscription_window.mainloop
 
-def apply_changes():
+def discard_changes():
+    subscription_window.destroy()
     try:
+        button_sub_disabled.destroy(), lable_sub_disabled.destroy()
+        sub_button(False)
         root_window.deiconify()
     except Exception: 
         pass
+
+def apply_changes(address, password, SC_target, BC_target):
     subscription_window.destroy()
-    settings_changer()
+    settings_data_changer(address, password, SC_target, BC_target)
+    subscription_switcher('enable')
+    try:
+        sub_button(True)
+        root_window.deiconify()
+    except Exception: 
+        pass    
     logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Email subscription enabled')
 
 not_first_launch_check()
+
 root_window = Tk()
 root_window.title("Cryptocurrency to USD")
-root_window.geometry('500x125')  
-logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Start')
+root_window.geometry('500x140')  
 
 create_lables(symbols)
 sub_button(subscription_checker())
+
+button_sub_enabled = Button(root_window, width=10, text='Price History', command=lambda: webbrowser.open('price_history'))
+button_sub_enabled.pack(side = RIGHT)
+
+root_window.after(60000, update_prices)
+logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Start')
 root_window.mainloop()
 
 
