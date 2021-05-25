@@ -10,7 +10,7 @@ logging.basicConfig(filename="logfile.log", level=logging.INFO)
 
 labels = []
 symbols = ['SC','BTC']
-api_twelvedata = 'https://api.twelvedata.com/time_series?symbol={}/USD&interval=1min&outputsize=3&format=JSON&dp=5&timezone=Europe/Moscow&apikey=f7e12a1a4dd34faca920cdff2c088e2b'
+api_twelvedata = 'https://api.twelvedata.com/time_series?symbol={}/USD&interval=1min&outputsize=3&format=JSON&dp=5&timezone=Europe/Moscow&apikey=ab2a1285e34c4fa78173db8c5a9f6d5f'
 # key=f7e12a1a4dd34faca920cdff2c088e2b
 # key=ab2a1285e34c4fa78173db8c5a9f6d5f
 def create_lables(symbols):
@@ -150,11 +150,14 @@ def subscription_settings_window():
     entry_password = Entry(subscription_window, width=30, borderwidth=1, show='*')
     entry_password.place(relx=0.5, rely=0.2)  
 
-    response = requests.get(api_twelvedata.format('SC'))
-    currency_base = response.json()['meta']['currency_base']
-    date_time = response.json()['values'][0]['datetime']
-    cost = response.json()['values'][0]['close']
-    price_history_update(currency_base, date_time, cost)
+    try:
+        response = requests.get(api_twelvedata.format('SC'))
+        currency_base = response.json()['meta']['currency_base']
+        date_time = response.json()['values'][0]['datetime']
+        cost = response.json()['values'][0]['close']
+        price_history_update(currency_base, date_time, cost)
+    except: 
+        cost = 'N/A'
     lable_SC_minmax = Label(subscription_window, font=('Arial,18'), text='Type in tracking price for Siacoin: ')
     lable_SC_minmax.place(relx=0.01, rely=0.35)
     entry_SC_min = Entry(subscription_window, width=15)
@@ -162,11 +165,14 @@ def subscription_settings_window():
     lable_BC_current = Label(subscription_window, text='Current: '+cost)
     lable_BC_current.place(relx=0.73, rely=0.35)        
 
-    response = requests.get(api_twelvedata.format('BTC'))
-    currency_base = response.json()['meta']['currency_base']
-    date_time = response.json()['values'][0]['datetime']
-    cost = response.json()['values'][0]['close']
-    price_history_update(currency_base, date_time, cost)
+    try:
+        response = requests.get(api_twelvedata.format('BTC'))
+        currency_base = response.json()['meta']['currency_base']
+        date_time = response.json()['values'][0]['datetime']
+        cost = response.json()['values'][0]['close']
+        price_history_update(currency_base, date_time, cost)
+    except: 
+        cost = 'N/A'
     lable_BC_minmax = Label(subscription_window, font=('Arial,18'), text='Type in tracking price for Bitcoin: ')
     lable_BC_minmax.place(relx=0.01, rely=0.5)
     entry_BC_min = Entry(subscription_window, width=15)
@@ -196,6 +202,10 @@ def apply_changes(address, password, SC_target, BC_target):
         pass    
     logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Email subscription enabled')
 
+def create_history_button():
+    button_sub_enabled = Button(root_window, width=10, text='Price History', command=lambda: webbrowser.open('price_history'))
+    button_sub_enabled.pack(side = RIGHT)
+
 not_first_launch_check()
 
 root_window = Tk()
@@ -204,9 +214,7 @@ root_window.geometry('500x140')
 
 create_lables(symbols)
 sub_button(subscription_checker())
-
-button_sub_enabled = Button(root_window, width=10, text='Price History', command=lambda: webbrowser.open('price_history'))
-button_sub_enabled.pack(side = RIGHT)
+create_history_button()
 
 root_window.after(60000, update_prices)
 logging.info(datetime.today().strftime('%D - %H:%M:%S') + ' Start')

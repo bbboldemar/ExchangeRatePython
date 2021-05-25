@@ -35,7 +35,7 @@ def send_email(mail_content):
 
 # print(send_email('OwO'))
 
-# must works with yandex.ru with another address and port
+# must work with yandex.ru with another address and port
 # doesn't work with mail.ru at all
 # your_address = 'your_address@gmail.com'
 # your_password = 'your_password'
