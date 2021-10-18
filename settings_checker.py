@@ -7,14 +7,17 @@ def subscription_checker():
         else:
             status = False
     except:
-        status = False               
+        status = False     
+                  
     f.close()
     return status
+
 
 def target_price_checker():
     with open("exchanger_settings",'r') as f:
         get_all = f.readlines()
         return [float(get_all[3][:len(get_all[3])-1]), float(get_all[4][:len(get_all[4])-1])]
+
 
 def subscription_switcher(status):
     with open("exchanger_settings",'r') as f:
@@ -29,10 +32,12 @@ def subscription_switcher(status):
             else:
                 f.writelines(line)
 
+
 def get_email_data():
     with open("exchanger_settings",'r') as f:
         get_all = f.readlines()
         return get_all[1], get_all[2]
+
 
 def settings_data_changer(address, password, SC_target, BC_target):
     with open("exchanger_settings",'r') as f:
@@ -50,9 +55,7 @@ def settings_data_changer(address, password, SC_target, BC_target):
             else:
                 f.writelines(line)    
 
+
 def price_history_update(currency_base, date_time, cost):
     with open("price_history",'a') as f:
         f.write('at ' + date_time + ' ' + currency_base + ' value is ' + cost + '\n')
-
-
-# print(target_price_checker())

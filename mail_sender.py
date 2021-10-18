@@ -1,10 +1,17 @@
-import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
-from settings_checker import get_email_data
+import smtplib
 import logging
-logging.basicConfig(filename="logfile.log", level=logging.INFO)
+
+from settings_checker import get_email_data
+
+'''
+must work with yandex.ru with another address and port, doesn't work with mail.ru
+your_address = 'your_address@gmail.com'
+your_password = 'your_password'
+2-step verification must be disabled, less secure apps must be enabled
+'''
 
 def send_email(mail_content):
     try:
@@ -13,7 +20,8 @@ def send_email(mail_content):
     except:
         logging.error(datetime.today().strftime('%D - %H:%M:%S') + ' Error via sending email: cant reach exchanger_settings')
         exchanger_setting_exists = False
-    if  exchanger_setting_exists == True:
+
+    if  exchanger_setting_exists == True:        
         try:
             message = MIMEMultipart()
             message['From'] = your_address
@@ -32,11 +40,4 @@ def send_email(mail_content):
             logging.error(datetime.today().strftime('%D - %H:%M:%S') + ' Error via sending email: invalid SMTP parameters')            
             return False
         
-
 # print(send_email('OwO'))
-
-# must work with yandex.ru with another address and port
-# doesn't work with mail.ru at all
-# your_address = 'your_address@gmail.com'
-# your_password = 'your_password'
-# 2-step verification must be disabled, less secure apps must be enabled
