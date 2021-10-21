@@ -1,25 +1,36 @@
-def subscription_checker():
-    f = open("exchanger_settings", "r")
-    checker = f.readline()
+def user_files_exist() -> bool:
     try:
-        if checker == 'subscription_enabled\n':
-            status = True
-        else:
-            status = False
+        with open("exchanger_settings", 'r') as f:
+            f.readlines()
+            return True
     except:
-        status = False     
-                  
+        return False
+
+
+def create_user_files() -> None:
+    f = open("exchanger_settings", "w")
+    f.write('subscription_disabled\nNone\nNone\nNone\nNone\n')
     f.close()
-    return status
+    f = open("price_history", "w")
+    f.close()
+    
+    
+def user_is_subscribed_checker() -> bool:
+    with open("exchanger_settings",'r') as f:
+        checker = f.readline()
+        if checker == 'subscription_enabled\n':
+            return True
+        else:
+            return False
 
 
-def target_price_checker():
+def target_price_checker() -> list[float, float]:
     with open("exchanger_settings",'r') as f:
         get_all = f.readlines()
         return [float(get_all[3][:len(get_all[3])-1]), float(get_all[4][:len(get_all[4])-1])]
 
 
-def subscription_switcher(status):
+def subscription_switcher(status: str):
     with open("exchanger_settings",'r') as f:
             get_all = f.readlines()
     with open("exchanger_settings",'w') as f:
@@ -56,6 +67,3 @@ def settings_data_changer(address, password, SC_target, BC_target):
                 f.writelines(line)    
 
 
-def price_history_update(currency_base, date_time, cost):
-    with open("price_history",'a') as f:
-        f.write('at ' + date_time + ' ' + currency_base + ' value is ' + cost + '\n')
