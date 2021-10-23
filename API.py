@@ -1,22 +1,66 @@
 import requests
 
-api_twelvedata = (
-    'https://api.twelvedata.com/time_series?'
-    'symbol={}/USD'
-    '&interval=1min&'
-    'outputsize=3&'
-    'format=JSON&'
-    'dp=5&'
-    'timezone=Europe/Moscow&'
-    'apikey=ab2a1285e34c4fa78173db8c5a9f6d5f'
-    )
-    # 'apikey=f7e12a1a4dd34faca920cdff2c088e2b'
-    # )
+from logger import logger_wr_error, logger_wr_info, DATAFILE_data_update
+from main import API_KEY1, API_KEY2, API_KEY3, API_URL
+
+def switch_API_key(counter = []) -> str:
+    """
+    Fake arg for switching between 2 keys
+    if API limit of 9 request/minute is reached.
+    """
+    if len(counter) %2 == 0:
+        new_key = API_KEY2
+    else:
+        new_key = API_KEY1
+    counter.append(1)
+    if len(counter) %2 == 0:
+        counter.clear()
+    return new_key
 
 
-def load_data_from_API(currency: str) -> tuple[str, str, str]:
-    response = requests.get(api_twelvedata.format(currency))
-    currency_base = response.json()['meta']['currency_base']
-    date_time = response.json()['values'][0]['datetime']
-    cost = response.json()['values'][0]['close']
-    return (currency_base, date_time, cost)
+def load_data_from_API(currency: str, API_key:str = API_KEY3) -> dict:
+    '''
+    Load data in JSON format from "api.twelvedata.com"
+    and return dictionary with "str" values.
+    '''
+    response = requests.get(API_URL.format(currency, API_key))
+    if response.json()['status'] == "ok":    
+        logger_wr_info('Successful update')   
+        APIdata = {
+            'currency_base': response.json()['meta']['currency_base'],
+            'date_time': response.json()['values'][0]['datetime'],
+            'cost': response.json()['values'][0]['close']
+        }
+        DATAFILE_data_update(APIdata)
+        return (APIdata)
+    else:
+        if response.json()['code'] == 400:
+            logger_wr_error('Requested type of currency N/A')
+            APIdata = {
+                'currency_base': currency,
+                'date_time': '-1',
+                'cost': '-1'
+            }
+            return (APIdata)
+        if response.json()['code'] == 429:
+            logger_wr_error('API key limit')
+            return dict()
+
+if __name__ == '__main__':
+    def test_errors():
+        'API test launch'
+        
+        print ("API test")
+        print('logfile line: 1 INFO, DATAFILE line: 1', 
+            load_data_from_API('BTC')
+        )
+        print('logfile line: 2 INFO, DATAFILE line: 2', 
+            load_data_from_API('SC')
+        )
+        API_call_limit = (x for x in range(3, 10))
+        for x in API_call_limit:
+            load_data_from_API('TESTFAIL')
+            if x != 9:
+                print('logfile line:', x, 'ERROR wrong currency')
+            else:
+                print('logfile line:', x, 'ERROR API limit')
