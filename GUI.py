@@ -1,8 +1,8 @@
 from tkinter import Label, Button, Tk, Entry, messagebox
 from tkinter.constants import BOTTOM, LEFT, RIGHT
 
+from API import load_data_from_API, all_data_from_API_is_correct
 from logger import logger_wr_info, DATAFILE_open
-from API import load_data_from_API
 from mail_sender import send_email
 from main import CURRENCIES
 
@@ -15,23 +15,12 @@ from settings_checker import (
     user_files_exist
 )
 
-
-def x(data_from_API):
-    for block in data_from_API:
-        if len(block.values()) == 0:
-            messagebox.showinfo (
-                "Error", "Can't reach remote server. Wait a minute..."
-            )
-            return False
-        return True
-
-def create_lables(CURRENCIES):
-    global labels
-    labels = []
+def create_lables_CCrate(CURRENCIES):
+    global root_window_labels
+    root_window_labels = []
     logger_wr_info('Updating...')
     data_from_API = [load_data_from_API(currency) for currency in CURRENCIES]
-    print (data_from_API)
-    if x(data_from_API):
+    if all_data_from_API_is_correct(data_from_API):
         for counter, currency in enumerate(CURRENCIES):
             lable = Label(
                 root_window, 
@@ -43,9 +32,12 @@ def create_lables(CURRENCIES):
                     data_from_API[counter]['date_time']
             )
             lable.pack()
-            labels.append(lable)
+            root_window_labels.append(lable)
     else:
-        create_lables(CURRENCIES)
+        messagebox.showinfo(
+            "Error", "Can't reach remote server. Wait a minute..."
+        )
+        create_lables_CCrate(CURRENCIES)
                     
 
 def format_email_data(data_from_API, target_price):
@@ -75,12 +67,12 @@ def format_email_data(data_from_API, target_price):
             )
         subscribsion_settings_opener('enable')      
             
-def update_prices():
+def update_lables_CCrate():
     logger_wr_info('Updating...')
     counter = 0
     for currency in CURRENCIES:
         data_from_API = load_data_from_API(currency)
-        labels[counter].configure(
+        root_window_labels[counter].configure(
             text = 
                 data_from_API['currency_base'] + 
                 f' ({currency})' +
@@ -100,7 +92,7 @@ def update_prices():
                 )
                 subscribsion_settings_opener('enable')
         counter += 1
-    root_window.after(90000, update_prices())
+    root_window.after(90000, update_lables_CCrate())
 
 
 def create_history_button():
@@ -342,7 +334,7 @@ def create_root_window():
     root_window.title("Cryptocurrency to USD")
     root_window.geometry('500x140')  
 
-    create_lables(CURRENCIES)
+    create_lables_CCrate(CURRENCIES)
     sub_button(check_user_is_subscribed())
     create_history_button()
      
@@ -354,7 +346,7 @@ if __name__ == "__main__":
         create_first_launch_window()
     create_root_window()
     root_window.mainloop()
-    # root_window.after(15000, update_prices())
+    # root_window.after(15000, update_lables_CCrate())
     
 
 """
