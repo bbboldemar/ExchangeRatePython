@@ -8,10 +8,10 @@ Crypto to USD via api.twelvedata.com with tkinter GUI
 Must work with 'yandex.ru' with another address and port and doesn't work with 'mail.ru' at all.
 For 'google.com' 2-step verification must be disabled, less secure apps must be enabled.
 
+
 This is my own "Hello World!" to you.
 
   to do list:
-      - api key switcher (def api_request():)
     subscription_settings_window:
       - through cycle
       - email address validation
