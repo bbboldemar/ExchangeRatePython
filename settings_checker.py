@@ -4,6 +4,8 @@ from logger import logger_wr_info
 from main import PATH_TO_SETTINGS
 
 def user_files_exist() -> bool:
+    logger_wr_info('Start')
+    print (os.path.exists(PATH_TO_SETTINGS))
     return os.path.exists(PATH_TO_SETTINGS)
 
 def create_default_user_files() -> None:
@@ -25,13 +27,20 @@ def check_user_is_subscribed() -> bool:
         return None
 
 
-def convert_target_price() -> list[float, float]:
+def convert_target_rate() -> list[float, float]:
+    """ Reads users target rates "exchanger_settings" file
+    and converts them to float.
+
+    Returns:
+        - list[float, float]: converted rates:
+        - or None if users target rates are incorrect.
+    """
     with open(PATH_TO_SETTINGS, 'r') as f:
-        get_all = f.readlines()
-        try: 
-            return [float(get_all[3][:len(get_all[3])-1]), float(get_all[4][:len(get_all[4])-1])]
+        try :
+            get_all = f.readlines()
+            return [float(get_all[3][:len(get_all[3])-1]), float(get_all[4][:len(get_all[4])-1])]           
         except:
-            return list()
+            return None
 
 
 def switch_subscription(status: bool):
@@ -50,27 +59,36 @@ def switch_subscription(status: bool):
                 f.writelines(line)
 
 
-def get_email_data() -> tuple:
+def read_user_log_pass() -> tuple:
+    """ Reads users email login and password
+    thru "exchanger_settings" file.
+
+    Returns:
+        - tuple: (users login, users password);
+        - or tuple: ('', '') if users data doesn't exist.
+    """
     try:
         with open(PATH_TO_SETTINGS, 'r') as f:
             get_all = f.readlines()
             return get_all[1], get_all[2]
     except:
-        return tuple()
+        return ('', '')
 
 
 def write_settings_data(address, password, SC_target, BC_target):
-    with open(PATH_TO_SETTINGS, 'r') as f:
-            get_all = f.readlines()
+    """ Writes users input into "exchanger_settings" file
+    and enables email subscription.
+
+    Args:
+        - address (str): users email address
+        - password (str): users password address
+        - SC_target (str): users target rate for SC
+        - BC_target (str): users target rate BTC
+    """
     with open(PATH_TO_SETTINGS, 'w') as f:
-        for i,line in enumerate(get_all,1):
-            if i == 2:
-                f.writelines(address+ '\n')
-            elif i == 3:
-                f.writelines(password+ '\n')
-            elif i == 4:
-                f.writelines(SC_target+ '\n')
-            elif i == 5:
-                f.writelines(BC_target+ '\n')
-            else:
-                f.writelines(line)
+        logger_wr_info('Email subscription enabled')
+        f.writelines('subscription_enabled\n')
+        f.writelines(address+ '\n')
+        f.writelines(password+ '\n')
+        f.writelines(SC_target+ '\n')
+        f.writelines(BC_target+ '\n')

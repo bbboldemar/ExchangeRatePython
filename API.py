@@ -1,36 +1,71 @@
 import requests
 
 from logger import logger_wr_error, logger_wr_info, DATAFILE_data_update
-from main import API_KEY1, API_KEY2, API_KEY3, API_URL, CURRENCIES
+from main import API_KEY1, API_KEY2, API_KEY3, API_KEY4, API_URL
 
-def all_data_from_API_is_correct(data_from_API:list) -> bool:
-    for block in data_from_API:
-        if len (block.values()) != 0:
-            return True
+
+def data_from_API_is_correct(data_from_API:list) -> bool:
+    """ Checking for empty block of data.
+
+    Args:
+        data_from_API (list): list of dictionaries.
+
+    Returns:
+        bool: True if all data isn't empty;
+        or bool: False if any data is None.
+    """
+    if any(block == None for block in data_from_API):
         return False
+    return True
 
 
-def switch_API_key(counter = []) -> str:
+def switch_API_key(transaction_counter = [0]) -> str:
+    """ Overcoming API restriction of 9 requests per minute.
+
+    Args:
+        - fake arg for switching between 4 keys.
+
+    Returns:
+        - str: API key ;
+        - or str: "invalid"
+        if all API 4 keys can't provide correct data.
     """
-    Fake arg for switching between 2 keys
-    if API limit of 9 request/minute is reached.
+    if len(transaction_counter) == 1:
+        key = API_KEY1
+    if len(transaction_counter) == 2:
+        key = API_KEY2
+    if len(transaction_counter) == 3:
+        key = API_KEY3
+    if len(transaction_counter) == 4:
+        key = API_KEY4
+    if len(transaction_counter) == 5:
+        key = None
+        transaction_counter.clear()
+    transaction_counter.append(1)
+    print (key)
+    return key
+
+
+def load_data_from_API(currency:str, API_key:str = API_KEY4) -> dict:
+    """ Loads data for given cryptocurrency in JSON format from 
+    "api.twelvedata.com" till any given key is correct.
+    
+    Args:
+        - currency (str): given cryptocurrency symbol;
+        - API_key (str):
+        default is API_KEY4, switches till all 4 keys are busted.
+
+    Returns:
+        - dict: dictionary with "str" keys and values;
+        - or None if:
+            - all 4 keys are busted;
+            - API returns errors 500, 400, 404, 414.
     """
-    if len(counter) %2 == 0:
-        new_key = API_KEY2
-    else:
-        new_key = API_KEY1
-    counter.append(1)
-    if len(counter) %2 == 0:
-        counter.clear()
-    return new_key
-
-
-def load_data_from_API(currency: str, API_key:str = API_KEY3) -> dict:
-    '''
-    Load data in JSON format from "api.twelvedata.com"
-    and return dictionary with "str" values.
-    '''
-    response = requests.get(API_URL.format(currency, API_key))
+    if API_key == 'invalid':
+            logger_wr_error('All 3 API keys are invalid')
+            return None
+    logger_wr_info('Updating')
+    response = requests.get(API_URL.format(currency, switch_API_key()))
     if response.json()['status'] == "ok":    
         logger_wr_info('Successful update')   
         APIdata = {
@@ -39,31 +74,15 @@ def load_data_from_API(currency: str, API_key:str = API_KEY3) -> dict:
             'cost': response.json()['values'][0]['close']
         }
         DATAFILE_data_update(APIdata)
-        return (APIdata)
+        return APIdata
     else:
-        if response.json()['code'] == 400:
-            logger_wr_error('Requested type of currency N/A')
-            return dict()
-        if response.json()['code'] == 429:
-            logger_wr_error('API key limit')
-            return dict()
-
-# if __name__ == '__main__':
-#     def test_errors():
-#         'API test launch'
-        
-#         print ("API test")
-#         print('logfile line: 1 INFO, DATAFILE line: 1', 
-#             load_data_from_API('BTC')
-#         )
-#         print('logfile line: 2 INFO, DATAFILE line: 2', 
-#             load_data_from_API('SC')
-#         )
-#         API_call_limit = (x for x in range(3, 10))
-#         for x in API_call_limit:
-#             load_data_from_API('TESTFAIL')
-#             if x != 9:
-#                 print('logfile line:', x, 'ERROR wrong currency')
-#             else:
-#                 print('logfile line:', x, 'ERROR API limit')
-#   test_errors()
+        if response.json()['code'] == 500:
+            logger_wr_error('Error on the API-side. Try again later.')
+            return None
+        if response.json()['code'] == (400 or 414 or 404):
+            logger_wr_error(response.json()['message'])
+            return None
+        if response.json()['code'] == (429 or 401):
+            logger_wr_error(response.json()['message'])
+            logger_wr_info('Switching API key')
+            return load_data_from_API(currency, switch_API_key())
