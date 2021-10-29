@@ -19,9 +19,10 @@ def send_email(mail_content:str) -> int:
     Returns:
         - int: response code:
         
+            - 403: Wrong login/password  
+            - or less secure apps disabled/2-step verification enabled;
             - 200: Message sent;
             - 401: Incorrect login/password;
-            - 403: Less secure apps are disabled or 2-step verification enabled;
             - 520: Unknown error.
     """
     your_address, your_password = read_exchanger_settings_log_pass()
@@ -36,15 +37,17 @@ def send_email(mail_content:str) -> int:
         session.starttls()
     except:
         logger_wr_error(
-            'Error via sending email: less secure apps are disabled'
-            'or 2-step verification enabled'
+            'Error via sending email: can not connect to '
+            'smtp.gmail.com on port 587'
         )
         return 403
     try:
         session.login(your_address, your_password)
     except:
         logger_wr_error(
-            'Error via sending email: wrong login/password'
+            'Error via sending email: wrong login/password OR '
+            'less secure apps are disabled OR '
+            '2-step verification enabled'
 )
         return 401
     try:
@@ -72,7 +75,8 @@ def format_email_data(data_from_API:dict, target_price:float) -> int:
         - int: response code:
             - 200: Message sent;
             - 401: Incorrect login/password;
-            - 403: Less secure apps are disabled or 2-step verification enabled;
+            - 403: Less secure apps are disabled 
+                or 2-step verification enabled;
             - 520: Unknown error.
     """
     return send_email(
@@ -80,5 +84,3 @@ def format_email_data(data_from_API:dict, target_price:float) -> int:
         + data_from_API['cost'] + ' at ' + data_from_API['date_time'] 
         + ' (more than ' + f'{target_price}' + ')'
     )
-
-# print(send_email('OwO'))

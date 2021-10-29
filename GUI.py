@@ -5,17 +5,85 @@ from API import load_data_from_API, keys_read_API_key
 from logger import DATAFILE_open, LOGFILE_open
 from mail_sender import format_email_data
 from settings_checker import (
-    check_exchanger_settings_subscription,
-    switch_exchanger_settings_subscription, 
+    switch_exchanger_settings_subscription,
     convert_exchanger_settings_target_rate,
+    check_exchanger_settings_subscription,
     create_exchanger_settings_file,
     write_exchanger_settings_data,
     exchanger_settings_exist
 )
-from main import CURRENCIES
+
+def raise_exit_incorrect_data():
+    messagebox.showinfo(
+            "Error", "API connection error. Opening log file."
+        )
+    LOGFILE_open()
+    print ('API error. Exit')
+    raise exit()
 
 
-def create_lables_CCrate(CURRENCIES):
+def raise_error_email_subscription(email_status):
+    root_window.withdraw()
+    subscribsion_settings_opener('enable')
+    if email_status == 401:
+        message = (
+            "Invalid email address/password OR "
+            "less secure apps are disabled OR "
+            "2-step verification enabled."
+        )
+    elif email_status == 403:
+        message = ("Can not connect to smtp.gmail.com on port 587")
+    elif email_status == 412:
+        message = ("Invalid target price format.")
+    else:
+        message = (
+            "Unknown problem via sending email. "
+            "Contact developer via github"
+            )
+    messagebox.showinfo ("Subscription Disabled", message)
+
+
+def form_email(data_from_API:dict, counter:int):
+    target_rate = convert_exchanger_settings_target_rate()
+    if target_rate != None:
+        rate_reached_target = float(data_from_API['cost']) > target_rate[counter]
+        if rate_reached_target:
+            email_status = format_email_data(data_from_API, target_rate[counter])
+            if email_status != 200:
+                raise_error_email_subscription(email_status)        
+    else:
+        raise_error_email_subscription(412)
+                
+
+def update_lables_CCrate():
+    CURRENCIES = ['SC','BTC']####
+    print ('update')
+    first_call_key = keys_read_API_key()
+    data_from_API = [
+        load_data_from_API(
+            currency, 
+            first_call_key, 
+            keys_read_API_key()
+        ) for currency in CURRENCIES]
+    if None not in data_from_API:
+        for block, currency in enumerate(CURRENCIES):
+            root_window_labels[block].configure(
+                text = 
+                    data_from_API[block]['currency_base'] + 
+                    ' value is ' +
+                    data_from_API[block]['cost'] + ' at ' + 
+                    data_from_API[block]['date_time']
+            )
+            if check_exchanger_settings_subscription():
+                form_email(data_from_API[block], block)
+        root_window.after(60000, update_lables_CCrate)
+    else:
+        raise_exit_incorrect_data()
+
+
+def create_lables_CCrate():
+    CURRENCIES = ['SC','BTC']####
+    print ('create')
     global root_window_labels
     first_call_key = keys_read_API_key()
     data_from_API = [
@@ -24,97 +92,22 @@ def create_lables_CCrate(CURRENCIES):
             first_call_key, 
             keys_read_API_key()
         ) for currency in CURRENCIES]
-    print(data_from_API)
-    # if data_from_API_is_correct(data_from_API):
     if None not in data_from_API:
         root_window_labels = []
-        for currency in range(len(CURRENCIES)):
+        for block, currency in enumerate(CURRENCIES):
             lable = Label(
                 root_window, 
                 font = ('Arial,25'), 
                 text = 
-                    data_from_API[currency]['currency_base'] + 
+                    data_from_API[block]['currency_base'] + 
                     ' value is ' +
-                    data_from_API[currency]['cost'] + ' at ' + 
-                    data_from_API[currency]['date_time']
+                    data_from_API[block]['cost'] + ' at ' + 
+                    data_from_API[block]['date_time']
             )
             lable.pack()
             root_window_labels.append(lable)
     else:
-        messagebox.showinfo(
-            "Error", "API connection error. Opening log file."
-        )
-        LOGFILE_open()
-        print ('API error. Exit')
-        raise exit()
-                    
-
-def update_lables_CCrate(CURRENCIES):
-    # counter = 0
-    first_call_key = keys_read_API_key()
-    data_from_API = [
-        load_data_from_API(
-            currency, 
-            first_call_key, 
-            keys_read_API_key()
-        ) for currency in CURRENCIES]
-    print (data_from_API)
-    # if data_from_API_is_correct(data_from_API):
-    if None not in data_from_API:
-        for currency in range(len(CURRENCIES)):
-            print (currency)
-            # root_window_labels[currency].configure(
-            #     text = 
-            #         data_from_API[currency]['currency_base'] + 
-            #         ' value is ' +
-            #         data_from_API[currency]['cost'] + ' at ' + 
-            #         data_from_API[currency]['date_time']
-            # )
-            # if check_exchanger_settings_subscription():
-            #     email_parser(data_from_API, counter)
-            # counter += 1
-    else:
-        messagebox.showinfo(
-            "Error", "API connection error. Opening log file."
-        )
-        LOGFILE_open()
-        print ('API error. Exit')
-        raise exit()
-    # root_window.after(60000, func = update_lables_CCrate(CURRENCIES))
-
-
-def email_parser(data_from_API:dict, counter:int):
-    target_rate = convert_exchanger_settings_target_rate()
-    if target_rate != None:
-        rate_reached_target = float(data_from_API['cost']) > target_rate[counter]
-        if rate_reached_target:
-            email_status = format_email_data(data_from_API, target_rate[counter])
-            if email_status != 200:
-                subscribsion_settings_opener('enable')
-                # button_sub_enabled.destroy(), lable_sub_enabled.destroy()
-                if email_status == 401:
-                    messagebox.showinfo (
-                        "Subscription Disabled", "Invalid email address or password."
-                    )
-                if email_status == 403:
-                    messagebox.showinfo (
-                        "Subscription Disabled", 
-                        "Less secure apps must be enabled, " 
-                        "2-step verification must be disabled."
-                    )
-                if email_status == 520:
-                    messagebox.showinfo (
-                        "Subscription Disabled", 
-                        "Unknown problem via sending email. "
-                        "Contact developer via github"
-                    )
-                      
-    else:
-        button_sub_enabled.destroy(), lable_sub_enabled.destroy()
-        messagebox.showinfo (
-            "Subscription Disabled", "Invalid target price format"
-        )
-        subscribsion_settings_opener('enable')
+        raise_exit_incorrect_data()
 
 
 def create_history_button():
@@ -125,7 +118,10 @@ def create_history_button():
         command=lambda: DATAFILE_open()
     )
     button_sub_enabled.pack(side = RIGHT)
-
+#
+#
+#
+#
 def subscribsion_settings_opener(choise):
     switch_exchanger_settings_subscription('disable')
     
@@ -136,10 +132,18 @@ def subscribsion_settings_opener(choise):
         create_subscription_settings_window()
 
 
-      
-
-
-
+def apply_subscription_changes(address, password, SC_target, BC_target, status):
+    subscription_window.destroy()
+    
+    if not status:
+        try:
+            button_sub_disabled.destroy(), lable_sub_disabled.destroy()
+        except Exception: 
+            print ('not a bug')
+    else:
+        write_exchanger_settings_data(address, password, SC_target, BC_target)
+    sub_button(status)
+    root_window.deiconify()
 
 
 def sub_button(choise):
@@ -165,7 +169,7 @@ def sub_button(choise):
         try:
             button_sub_disabled.destroy(), lable_sub_disabled.destroy()
         except Exception: 
-            pass
+            print ('not a bug')
     else:
         button_sub_disabled = Button(   
             root_window, 
@@ -185,21 +189,11 @@ def sub_button(choise):
         try:
             button_sub_enabled.destroy(), lable_sub_enabled.destroy()   
         except Exception: 
-            pass  
+            print ('not a bug')
 
-
-def apply_subscription_changes(address, password, SC_target, BC_target, status):
-    subscription_window.destroy()
-    
-    if not status:
-        button_sub_disabled.destroy(), lable_sub_disabled.destroy()
-    else:
-        write_exchanger_settings_data(address, password, SC_target, BC_target)
-    sub_button(status)
-    root_window.deiconify()
 
 def create_subscription_settings_window():
-    'Nice'
+    CURRENCIES = ['SC','BTC']####
     global subscription_window
     subscription_window = Tk()
     subscription_window.title("Settings. Please, fill all entry fields")
@@ -252,7 +246,6 @@ def create_subscription_settings_window():
             first_call_key, 
             keys_read_API_key()
         ) for currency in CURRENCIES]
-    print (data_from_API)
     # if data_from_API_is_correct(data_from_API):
     if None not in data_from_API:
         lable_SC_current = Label(
@@ -315,17 +308,15 @@ def create_subscription_settings_window():
     entry_BTC_min.place(relx=0.5, rely=0.5)
         
     subscription_window.mainloop
-
-
-
-
-
+#
+#
+#
+#
 def create_first_launch_window():
     def user_need_subscription(confirmation):
         first_launch_window.destroy()
         if confirmation:
             create_subscription_settings_window()   
-            # root_window.deiconify()
             
     global first_launch_window
     first_launch_window = Tk()
@@ -367,17 +358,18 @@ def create_root_window():
     root_window = Tk()
     root_window.title("Cryptocurrency to USD")
     root_window.geometry('500x140')  
-    create_lables_CCrate(CURRENCIES)
     
+    create_lables_CCrate()
+    root_window.after(60000, update_lables_CCrate)
     sub_button(check_exchanger_settings_subscription())
     create_history_button()
-    
     root_window.mainloop()
-    # root_window.after(5000, update_lables_CCrate(CURRENCIES))
+    
 
 if __name__ == "__main__":
     if not exchanger_settings_exist():
         create_exchanger_settings_file()
         create_first_launch_window()
     create_root_window()
+    
 

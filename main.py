@@ -1,7 +1,5 @@
 import os
 
-CURRENCIES = ['SC','BTC']
-
 API_URL = (
     'https://api.twelvedata.com/time_series?symbol={}/'
     'USD&interval=1min&outputsize=3&format=JSON&dp=5&'

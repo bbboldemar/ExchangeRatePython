@@ -11,7 +11,6 @@ logging.basicConfig(
     force=True
 )
 
-
 def logger_wr_info(message: str) -> None:
     logging.info(datetime.today().strftime('%D - %H:%M:%S ') + message)
 
