@@ -7,9 +7,9 @@ from mail_sender import format_email_data
 from settings_checker import (
     check_exchanger_settings_subscription,
     switch_exchanger_settings_subscription, 
-    write_exchanger_settings_data,
     convert_exchanger_settings_target_rate,
     create_exchanger_settings_file,
+    write_exchanger_settings_data,
     exchanger_settings_exist
 )
 from main import CURRENCIES
