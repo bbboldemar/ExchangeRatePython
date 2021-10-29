@@ -9,7 +9,7 @@ API_URL = (
 SETTINGS = "exchanger_settings"
 DATAFILE = "Price-History"
 LOGFILE = "logfile.log"
-KEYS = 'keys'
+KEYS = 'keys_DEBUG'
 
 ROOT_DIR = os.path.dirname(os.path.abspath('__main__'))
 PATH_TO_DATAFILE = os.path.join(ROOT_DIR, 'userfiles', DATAFILE)

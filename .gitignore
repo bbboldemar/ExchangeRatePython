@@ -1,7 +1,6 @@
-userfiles/keys
+userfiles/keys_DEBUG
 userfiles/Price-History
 userfiles/logfile.log
 userfiles/exchanger_settings
 __pycache__/
 *.py[cod]
-.gitignore
