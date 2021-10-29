@@ -1,5 +1,7 @@
-exchanger_settings
-Price-History
-logfile.log
-keys
+userfiles/keys
+userfiles/Price-History
+userfiles/logfile.log
+userfiles/exchanger_settings
+__pycache__/
+*.py[cod]
 .gitignore
