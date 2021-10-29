@@ -2,7 +2,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 
-from settings_checker import read_user_log_pass
+from settings_checker import read_exchanger_settings_log_pass
 from logger import logger_wr_error, logger_wr_info
 
 def send_email(mail_content:str) -> int:
@@ -24,7 +24,7 @@ def send_email(mail_content:str) -> int:
             - 403: Less secure apps are disabled or 2-step verification enabled;
             - 520: Unknown error.
     """
-    your_address, your_password = read_user_log_pass()
+    your_address, your_password = read_exchanger_settings_log_pass()
     message = MIMEMultipart()
     message['From'] = your_address
     message['To'] = your_address
@@ -45,7 +45,7 @@ def send_email(mail_content:str) -> int:
     except:
         logger_wr_error(
             'Error via sending email: wrong login/password'
-        )
+)
         return 401
     try:
         session.sendmail(your_address, your_address, text)
@@ -75,11 +75,10 @@ def format_email_data(data_from_API:dict, target_price:float) -> int:
             - 403: Less secure apps are disabled or 2-step verification enabled;
             - 520: Unknown error.
     """
-    email_status = send_email(
+    return send_email(
         data_from_API['currency_base'] + ' cost is ' 
         + data_from_API['cost'] + ' at ' + data_from_API['date_time'] 
         + ' (more than ' + f'{target_price}' + ')'
     )
-    return email_status
 
 # print(send_email('OwO'))

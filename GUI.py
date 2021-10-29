@@ -1,26 +1,33 @@
 from tkinter import Label, Button, Tk, Entry, messagebox
 from tkinter.constants import BOTTOM, LEFT, RIGHT
 
-from API import load_data_from_API, data_from_API_is_correct
+from API import load_data_from_API, keys_read_API_key
 from logger import DATAFILE_open, LOGFILE_open
 from mail_sender import format_email_data
 from settings_checker import (
-    check_user_is_subscribed,
-    switch_subscription, 
-    write_settings_data,
-    convert_target_rate,
-    create_default_user_files,
-    user_files_exist
+    check_exchanger_settings_subscription,
+    switch_exchanger_settings_subscription, 
+    write_exchanger_settings_data,
+    convert_exchanger_settings_target_rate,
+    create_exchanger_settings_file,
+    exchanger_settings_exist
 )
 from main import CURRENCIES
 
 
 def create_lables_CCrate(CURRENCIES):
     global root_window_labels
-    root_window_labels = []
-    data_from_API = [load_data_from_API(currency) for currency in CURRENCIES]
+    first_call_key = keys_read_API_key()
+    data_from_API = [
+        load_data_from_API(
+            currency, 
+            first_call_key, 
+            keys_read_API_key()
+        ) for currency in CURRENCIES]
     print(data_from_API)
-    if data_from_API_is_correct(data_from_API):
+    # if data_from_API_is_correct(data_from_API):
+    if None not in data_from_API:
+        root_window_labels = []
         for currency in range(len(CURRENCIES)):
             lable = Label(
                 root_window, 
@@ -44,9 +51,16 @@ def create_lables_CCrate(CURRENCIES):
 
 def update_lables_CCrate(CURRENCIES):
     # counter = 0
-    data_from_API = [load_data_from_API(currency) for currency in CURRENCIES]
+    first_call_key = keys_read_API_key()
+    data_from_API = [
+        load_data_from_API(
+            currency, 
+            first_call_key, 
+            keys_read_API_key()
+        ) for currency in CURRENCIES]
     print (data_from_API)
-    if data_from_API_is_correct(data_from_API):
+    # if data_from_API_is_correct(data_from_API):
+    if None not in data_from_API:
         for currency in range(len(CURRENCIES)):
             print (currency)
             # root_window_labels[currency].configure(
@@ -56,7 +70,7 @@ def update_lables_CCrate(CURRENCIES):
             #         data_from_API[currency]['cost'] + ' at ' + 
             #         data_from_API[currency]['date_time']
             # )
-            # if check_user_is_subscribed():
+            # if check_exchanger_settings_subscription():
             #     email_parser(data_from_API, counter)
             # counter += 1
     else:
@@ -70,7 +84,7 @@ def update_lables_CCrate(CURRENCIES):
 
 
 def email_parser(data_from_API:dict, counter:int):
-    target_rate = convert_target_rate()
+    target_rate = convert_exchanger_settings_target_rate()
     if target_rate != None:
         rate_reached_target = float(data_from_API['cost']) > target_rate[counter]
         if rate_reached_target:
@@ -113,7 +127,7 @@ def create_history_button():
     button_sub_enabled.pack(side = RIGHT)
 
 def subscribsion_settings_opener(choise):
-    switch_subscription(False)
+    switch_exchanger_settings_subscription('disable')
     
     if choise == 'disable':
         sub_button(False)
@@ -180,7 +194,7 @@ def apply_subscription_changes(address, password, SC_target, BC_target, status):
     if not status:
         button_sub_disabled.destroy(), lable_sub_disabled.destroy()
     else:
-        write_settings_data(address, password, SC_target, BC_target)
+        write_exchanger_settings_data(address, password, SC_target, BC_target)
     sub_button(status)
     root_window.deiconify()
 
@@ -218,8 +232,7 @@ def create_subscription_settings_window():
             entry_BTC_min.get(),
             True
         )
-    )
-           
+    )     
            
            
     lable_BTC_min_trackin_price = Label(
@@ -231,8 +244,17 @@ def create_subscription_settings_window():
         font=('Arial,18'), 
         text='Minimum tracked price for Siacoin: '
     )
-    data_from_API = [load_data_from_API(currency) for currency in CURRENCIES]
-    if data_from_API_is_correct(data_from_API):
+    first_call_key = keys_read_API_key()
+    # change to reading from Price-History BUT it isn't exist on firt launch
+    data_from_API = [
+        load_data_from_API(
+            currency, 
+            first_call_key, 
+            keys_read_API_key()
+        ) for currency in CURRENCIES]
+    print (data_from_API)
+    # if data_from_API_is_correct(data_from_API):
+    if None not in data_from_API:
         lable_SC_current = Label(
             subscription_window,
             font=('Arial, 10'), 
@@ -347,47 +369,15 @@ def create_root_window():
     root_window.geometry('500x140')  
     create_lables_CCrate(CURRENCIES)
     
-
-    sub_button(check_user_is_subscribed())
+    sub_button(check_exchanger_settings_subscription())
     create_history_button()
     
     root_window.mainloop()
-    # root_window.after(3000, update_lables_CCrate(CURRENCIES))
+    # root_window.after(5000, update_lables_CCrate(CURRENCIES))
 
 if __name__ == "__main__":
-    if not user_files_exist():
-        create_default_user_files()
+    if not exchanger_settings_exist():
+        create_exchanger_settings_file()
         create_first_launch_window()
     create_root_window()
-    
-    
-
-"""
-class Person:
- 
-    # конструктор
-    def __init__(self, name):
-        self.name = name  # устанавливаем имя
- 
-    def display_info(self):
-        print("Привет, меня зовут", self.name)
- 
-# person1 = Person("Tom")
-# person1.display_info()         # Привет, меня зовут Tom 
-
-class Windows:
-    def root_window():
-        pass
-        
-        
-    def first_launch_window():
-        pass
-    
-class Labeles:
-    def __init__(self, name):
-        self.name = name  # устанавливаем имя
- 
-    def display_info(self):
-        print("Привет, меня зовут", self.name)
-"""
 
