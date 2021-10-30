@@ -2,10 +2,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 
-from settings_checker import read_exchanger_settings_log_pass
-from logger import logger_wr_error, logger_wr_info
+from modules.userfiles_handler import read_exchanger_settings_log_pass
+from modules.logger import logger_wr_error, logger_wr_info
 
-def send_email(mail_content:str) -> int:
+
+def send_email(mail_content: str) -> int:
     """ Sends email content with given data from/to given "gmail.com" 
     address and returns response code.
     Can work with "yandex.ru" with another address and port, 
@@ -18,7 +19,7 @@ def send_email(mail_content:str) -> int:
 
     Returns:
         - int: response code:
-        
+
             - 403: Wrong login/password  
             - or less secure apps disabled/2-step verification enabled;
             - 200: Message sent;
@@ -33,7 +34,7 @@ def send_email(mail_content:str) -> int:
     message.attach(MIMEText(mail_content, 'plain'))
     text = message.as_string()
     try:
-        session = smtplib.SMTP('smtp.gmail.com', 587, timeout = 1)
+        session = smtplib.SMTP('smtp.gmail.com', 587, timeout=1)
         session.starttls()
     except:
         logger_wr_error(
@@ -48,7 +49,7 @@ def send_email(mail_content:str) -> int:
             'Error via sending email: wrong login/password OR '
             'less secure apps are disabled OR '
             '2-step verification enabled'
-)
+        )
         return 401
     try:
         session.sendmail(your_address, your_address, text)
@@ -62,9 +63,9 @@ def send_email(mail_content:str) -> int:
             'Error via sending email: something wrong with connection'
         )
         return 520
-      
-  
-def format_email_data(data_from_API:dict, target_price:float) -> int:
+
+
+def format_email_data(data_from_API: dict, target_price: float) -> int:
     """ Formats messages text.
 
     Args:
@@ -80,7 +81,7 @@ def format_email_data(data_from_API:dict, target_price:float) -> int:
             - 520: Unknown error.
     """
     return send_email(
-        data_from_API['currency_base'] + ' cost is ' 
-        + data_from_API['cost'] + ' at ' + data_from_API['date_time'] 
+        data_from_API['currency_base'] + ' cost is '
+        + data_from_API['cost'] + ' at ' + data_from_API['date_time']
         + ' (more than ' + f'{target_price}' + ')'
     )

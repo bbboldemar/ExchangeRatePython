@@ -9,7 +9,7 @@ SHIB
 SC
 DOGE
 # list of all available cryptocurrencies in form of:
-# cryptocurrencie: cryptocurrencies label
+# cryptocurrencie: cryptocurrencie label
 0xBitcoin: 0xBTC
 1inch: 1INCH
 FirstBlood: 1ST

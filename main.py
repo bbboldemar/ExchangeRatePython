@@ -1,18 +1,33 @@
-import os
+from modules.logger import logger_wr_error, logger_wr_info
+from modules.gui import create_root_window
+from modules import install_and_import
+from modules.userfiles_handler import (
+    exchanger_settings_exist,
+    create_exchanger_settings_file
+)
 
-API_URL = (
-    'https://api.twelvedata.com/time_series?symbol={}/'
-    'USD&interval=1min&outputsize=3&format=JSON&dp=5&'
-    'timezone=Europe/Moscow&apikey={}'
-    )
 
-SETTINGS = "exchanger_settings"
-DATAFILE = "Price-History"
-LOGFILE = "logfile.log"
-KEYS = 'keys_DEBUG'
+def requests_installed_check():
+    try:
+        import requests
+    except:
+        install = input(
+            'Install Requests — 3-rd party library for Python (Y/N)?')
+        if install in ["y", "Y", ""]:
+            install_and_import('requests')
+            logger_wr_info('Installed "requests" library')
+        else:
+            print('Exit')
+            raise quit()
 
-ROOT_DIR = os.path.dirname(os.path.abspath('__main__'))
-PATH_TO_DATAFILE = os.path.join(ROOT_DIR, 'userfiles', DATAFILE)
-PATH_TO_SETTINGS = os.path.join(ROOT_DIR, 'userfiles', SETTINGS)
-PATH_TO_LOGFILE = os.path.join(ROOT_DIR, 'userfiles', LOGFILE)
-PATH_TO_KEYS = os.path.join(ROOT_DIR, 'userfiles', KEYS)
+
+if __name__ == "__main__":
+    logger_wr_info('Start')
+    requests_installed_check()
+    if not exchanger_settings_exist():
+        logger_wr_info('First launch')
+        create_exchanger_settings_file()
+        create_root_window(True)
+    else:
+        logger_wr_info('Welcome back')
+        create_root_window(False)
