@@ -19,6 +19,12 @@ def check_exchanger_settings_subscription() -> bool:
             return True
 
 
+def disable_exchanger_settings_subscription():
+    with open(PATH_TO_SETTINGS, 'w+') as f:
+        f.writelines('subscription_disabled\n')
+        logger_wr_info('Email subscription disabled')
+
+
 def convert_exchanger_settings_target_rate() -> list[float, float]:
     """ Reads users target rates "exchanger_settings" file
     and converts them to float.
@@ -37,12 +43,6 @@ def convert_exchanger_settings_target_rate() -> list[float, float]:
         except:
             logger_wr_error('Incorrect tagret price format')
             return None
-
-
-def disable_exchanger_settings_subscription():
-    with open(PATH_TO_SETTINGS, 'w+') as f:
-        f.writelines('subscription_disabled\n')
-        logger_wr_info('Email subscription disabled')
 
 
 def read_exchanger_settings_log_pass() -> tuple:

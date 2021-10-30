@@ -173,13 +173,7 @@ def create_sub_button(subscription_enable):
         lable_sub_disabled.pack(side=BOTTOM)
 
 
-#
-#
-#
-#
-
 def create_subscription_settings_window():
-    CURRENCIES = ['SC', 'BTC']
     global subscription_window
     subscription_window = Tk()
     subscription_window.title("Settings. Please, fill all entry fields")
@@ -193,25 +187,20 @@ def create_subscription_settings_window():
     )
     entry_address.place(relx=0.5, rely=0.05)
     entry_password.place(relx=0.5, rely=0.2)
-
-    first_try_key = keys_read_API_key()
-    data_from_API = [
-        load_data_from_API(
-            currency,
-            first_try_key,
-            keys_read_API_key()
-        ) for currency in CURRENCIES]
-    if None not in data_from_API:
-        lable_SC_current = Label(
-            subscription_window,
-            font=('Arial, 10'),
-            text='Current: ' + data_from_API[0]['cost']
-        )
-        lable_BTC_current = Label(
-            subscription_window,
-            font=('Arial, 10'),
-            text='Current: ' + data_from_API[1]['cost']
-        )
+    
+    lable_address = Label(
+        subscription_window,
+        font=('Arial,18'),
+        text='Your email address: '
+    )
+    lable_password = Label(
+        subscription_window,
+        font=('Arial,18'),
+        text='Your email password: '
+    )
+    lable_address.place(relx=0.01, rely=0.05)
+    lable_password.place(relx=0.01, rely=0.2)
+    
     button_discard_changes = Button(
         subscription_window,
         width=18,
@@ -240,6 +229,38 @@ def create_subscription_settings_window():
             True
         )
     )
+    button_discard_changes.place(relx=0.02, rely=0.8)
+    button_apply_changes.place(relx=0.6, rely=0.8)
+
+# Должно выполняться один раз при запуске
+#     with open(PATH_TO_CRYPTOCURRENCY_LIST, 'r') as f:
+#         get_all = f.readlines()
+#         CURRENCIES = []
+#         for line in get_all:
+#             if line == some_re:
+#                 CURRENCIES.append(line - '/n')
+#             if len(CURRENCIES) == 8:
+#                 break
+#  CURRENCIES = read_users_currencies
+    CURRENCIES = ['SC', 'BTC']
+    first_try_key = keys_read_API_key()
+    data_from_API = [
+        load_data_from_API(
+            currency,
+            first_try_key,
+            keys_read_API_key()
+        ) for currency in CURRENCIES]
+    if None not in data_from_API:
+        lable_SC_current = Label(
+            subscription_window,
+            font=('Arial, 10'),
+            text='Current: ' + data_from_API[0]['cost']
+        )
+        lable_BTC_current = Label(
+            subscription_window,
+            font=('Arial, 10'),
+            text='Current: ' + data_from_API[1]['cost']
+        )
     lable_BTC_min_trackin_price = Label(
         subscription_window, font=('Arial,18'),
         text='Minimum tracked price for Bitcoin: '
@@ -249,30 +270,14 @@ def create_subscription_settings_window():
         font=('Arial,18'),
         text='Minimum tracked price for Siacoin: '
     )
-    lable_address = Label(
-        subscription_window,
-        font=('Arial,18'),
-        text='Your email address: '
-    )
-    lable_password = Label(
-        subscription_window,
-        font=('Arial,18'),
-        text='Your email password: '
-    )
     entry_SC_min = Entry(
         subscription_window, width=15
     )
     entry_BTC_min = Entry(
         subscription_window, width=15
     )
-
-    button_discard_changes.place(relx=0.02, rely=0.8)
-    button_apply_changes.place(relx=0.6, rely=0.8)
-
     lable_SC_min_trackin_price.place(relx=0.01, rely=0.35)
     lable_BTC_min_trackin_price.place(relx=0.01, rely=0.5)
-    lable_address.place(relx=0.01, rely=0.05)
-    lable_password.place(relx=0.01, rely=0.2)
     lable_SC_current.place(relx=0.73, rely=0.35)
     lable_BTC_current.place(relx=0.73, rely=0.5)
 
@@ -280,10 +285,10 @@ def create_subscription_settings_window():
     entry_BTC_min.place(relx=0.5, rely=0.5)
 
     subscription_window.mainloop
-#
-#
-#
-#
+#  
+#  
+#  
+#  
 
 
 def user_need_subscription(confirmation):
